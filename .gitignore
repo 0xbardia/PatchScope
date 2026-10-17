@@ -1,0 +1,44 @@
+# Environment files and credentials
+.env
+.env*.local
+*.env
+*.key
+*.pem
+*wallet*.json
+.echo-test-wallet.json
+
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts
+.output/
+.vercel/
+dist/
+build/
+.tanstack/
+
+# Logs and debug
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# System and editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Test outputs and temporary traces
+/tmp/
+*.tmp

@@ -1,0 +1,76 @@
+name: PatchScope CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-and-tests:
+    name: Lint, Typecheck, Test & Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript typecheck
+        run: npm run typecheck
+
+      - name: Run frontend & policy unit tests
+        run: npm run test
+
+      - name: Run smart contract unit tests
+        run: python3 -m unittest discover -s EchoTrace/contracts -p "test_*.py"
+
+      - name: Production build
+        run: npm run build
+        env:
+          VITE_GENLAYER_RPC_URL: "https://studio.genlayer.com/api"
+          VITE_GENLAYER_CHAIN_ID: "61999"
+          VITE_GENLAYER_CONTRACT_ADDRESS: "0x7aFa58C5CF4E0145Bbb8B9C508036EeBc349C2Df"
+
+  live-rpc-check:
+    name: Opt-in Live Studionet Read Diagnostics
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run read-only 7-view contract diagnostics
+        run: node scripts/check-contract-views.mjs
+        env:
+          VITE_GENLAYER_RPC_URL: "https://studio.genlayer.com/api"
+          VITE_GENLAYER_CONTRACT_ADDRESS: "0x7aFa58C5CF4E0145Bbb8B9C508036EeBc349C2Df"

@@ -1,0 +1,38 @@
+{
+  "url": "http://127.0.0.1:8081/",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "PatchScope — Freeze the card. Classify the ask.",
+      "hasCanvas": false,
+      "bodyTextLen": 2763,
+      "bodyTextHash": "aa91247d65f27280c037e270e8c7918d15e0d27a4cc9fcda4fe6d7fe4c8ef077",
+      "bodyTextPrefix": "Skip to content PatchScope Docs Roadmap Security Privacy Ledger ",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "PatchScope — Freeze the card. Classify the ask.",
+      "hasCanvas": false,
+      "bodyTextLen": 2763,
+      "bodyTextHash": "178a1e180d4cbab9557e5247dd7218bd186e91e2ea1c020569379025a3862d8f",
+      "bodyTextPrefix": "Skip to content PatchScope Connect Docs Roadmap Security Privacy",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/app-builder-built-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/app-builder-built.json",
+  "divergesFromBaseline": false,
+  "baselineReasons": []
+}
