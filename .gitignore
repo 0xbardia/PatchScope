@@ -9,7 +9,7 @@
 
 # Dependencies
 node_modules/
-vendor/
+!vendor/x402-evm/
 
 # Build artifacts
 .output/

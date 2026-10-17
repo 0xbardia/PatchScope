@@ -1,0 +1,11 @@
+{
+  "name": "@x402/evm",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./exact/client": "./empty.js",
+    "./upto/client": "./empty.js"
+  }
+}
