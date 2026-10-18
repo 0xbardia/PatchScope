@@ -7,8 +7,23 @@ import { createClient } from "genlayer-js";
 import { studionet } from "genlayer-js/chains";
 
 const rpc = process.env.VITE_GENLAYER_RPC_URL || "https://studio.genlayer.com/api";
-const contractAddress = (process.env.VITE_GENLAYER_CONTRACT_ADDRESS || "0x7aFa58C5CF4E0145Bbb8B9C508036EeBc349C2Df").trim();
+const contractAddress = (process.env.VITE_GENLAYER_CONTRACT_ADDRESS || "").trim();
 const expectedChainId = 61999;
+
+if (
+  !contractAddress ||
+  !/^0x[0-9a-fA-F]{40}$/.test(contractAddress) ||
+  /^0x0{40}$/i.test(contractAddress)
+) {
+  console.log("=================================================");
+  console.log("PatchScope 7-View Read-Only Diagnostics");
+  console.log("=================================================");
+  console.log("NOTICE: VITE_GENLAYER_CONTRACT_ADDRESS is not set or invalid.");
+  console.log("Explicit Configuration Required: No silent fallback address.");
+  console.log("To run on-chain view verification against Studionet, specify:");
+  console.log("  VITE_GENLAYER_CONTRACT_ADDRESS=0x... npm run check:views\n");
+  process.exit(0);
+}
 
 console.log("=================================================");
 console.log("PatchScope 7-View Read-Only Diagnostics");
@@ -24,7 +39,7 @@ try {
     headers: {
       "Content-Type": "application/json",
       "User-Agent": "PatchScope-Diagnostics/1.0",
-      "Referer": "https://studio.genlayer.com/",
+      Referer: "https://studio.genlayer.com/",
     },
     body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "eth_chainId", params: [] }),
   });
@@ -69,8 +84,15 @@ async function testView(index, name, fnName, args, expectRevert = false) {
     const duration = Date.now() - start;
     const msg = err.message || String(err);
     if (expectRevert) {
-      results.push({ index, name, status: "PASS", note: `Reverted as expected: ${msg.split("\n")[0]}` });
-      console.log(`[PASS] ${index}. ${name} (${duration}ms) [Expected Revert: ${msg.split("\n")[0]}]`);
+      results.push({
+        index,
+        name,
+        status: "PASS",
+        note: `Reverted as expected: ${msg.split("\n")[0]}`,
+      });
+      console.log(
+        `[PASS] ${index}. ${name} (${duration}ms) [Expected Revert: ${msg.split("\n")[0]}]`,
+      );
     } else {
       results.push({ index, name, status: "FAIL", error: msg });
       console.log(`[FAIL] ${index}. ${name} (${duration}ms)\n       ${msg}`);
@@ -83,7 +105,13 @@ await testView(1, "get_policy()", "get_policy", []);
 await testView(2, "list_agreements('', 10)", "list_agreements", ["", 10]);
 await testView("2-boundary", "list_agreements('', 0) [boundary]", "list_agreements", ["", 0], true);
 await testView(3, "list_cases('', 10)", "list_cases", ["", 10]);
-await testView("3-boundary", "list_cases('bad_cursor', 10) [boundary]", "list_cases", ["bad_cursor", 10], true);
+await testView(
+  "3-boundary",
+  "list_cases('bad_cursor', 10) [boundary]",
+  "list_cases",
+  ["bad_cursor", 10],
+  true,
+);
 await testView(4, "get_agreement('agr-missing')", "get_agreement", ["agr-missing"], true);
 await testView(5, "get_case('case-missing')", "get_case", ["case-missing"], true);
 await testView(6, "get_decision('case-missing')", "get_decision", ["case-missing"], true);

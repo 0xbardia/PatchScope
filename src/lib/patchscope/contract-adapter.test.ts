@@ -9,7 +9,9 @@ import {
 } from "./contract-adapter.ts";
 import { usePatchScope } from "./store.ts";
 
-function createMockProvider(overrides: Record<string, (params?: any) => Promise<any> | any> = {}): InjectedEthereumProvider {
+function createMockProvider(
+  overrides: Record<string, (params?: any) => Promise<any> | any> = {},
+): InjectedEthereumProvider {
   return {
     async request({ method, params }) {
       if (overrides[method]) {
@@ -57,6 +59,30 @@ describe("contract-adapter: network and chain assertions", () => {
 
 describe("contract-adapter: write submission and error handling", () => {
   const dummyAccount = "0x1111111111111111111111111111111111111111";
+  const dummyContract = "0x5555555555555555555555555555555555555555";
+
+  it("throws CONFIG_ERROR when contract address is missing", async () => {
+    const provider = createMockProvider();
+    const oldEnv = process.env.VITE_GENLAYER_CONTRACT_ADDRESS;
+    try {
+      delete process.env.VITE_GENLAYER_CONTRACT_ADDRESS;
+      await assert.rejects(
+        async () => {
+          await executeContractWrite(provider, dummyAccount, "create_agreement", [
+            '{"title":"test"}',
+            "0x2222222222222222222222222222222222222222",
+          ]);
+        },
+        (err: unknown) => {
+          assert.ok(err instanceof ContractAdapterError);
+          assert.equal(err.code, "CONFIG_ERROR");
+          return true;
+        },
+      );
+    } finally {
+      if (oldEnv) process.env.VITE_GENLAYER_CONTRACT_ADDRESS = oldEnv;
+    }
+  });
 
   it("submits contract write and returns tracking record with real hash format", async () => {
     const expectedHash = `0x${"ab".repeat(32)}`;
@@ -70,6 +96,7 @@ describe("contract-adapter: write submission and error handling", () => {
       "create_agreement",
       ['{"title":"test"}', "0x2222222222222222222222222222222222222222"],
       "agr-test-1",
+      dummyContract,
     );
 
     assert.equal(record.txHash, expectedHash);
@@ -92,6 +119,8 @@ describe("contract-adapter: write submission and error handling", () => {
           dummyAccount,
           "create_agreement",
           ["{}", "0x2222222222222222222222222222222222222222"],
+          undefined,
+          dummyContract,
         );
       },
       (err: unknown) => {
@@ -106,7 +135,9 @@ describe("contract-adapter: write submission and error handling", () => {
   it("catches safety guard blocked broadcast", async () => {
     const provider = createMockProvider({
       eth_sendTransaction: () => {
-        throw new Error("BLOCKED_BY_SAFETY_GUARD: Automated scripts are forbidden from broadcasting transactions.");
+        throw new Error(
+          "BLOCKED_BY_SAFETY_GUARD: Automated scripts are forbidden from broadcasting transactions.",
+        );
       },
     });
 
@@ -117,6 +148,8 @@ describe("contract-adapter: write submission and error handling", () => {
           dummyAccount,
           "create_agreement",
           ["{}", "0x2222222222222222222222222222222222222222"],
+          undefined,
+          dummyContract,
         );
       },
       (err: unknown) => {

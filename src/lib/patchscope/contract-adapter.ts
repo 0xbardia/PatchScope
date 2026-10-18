@@ -1,6 +1,6 @@
 import { createClient } from "genlayer-js";
 import { studionet } from "genlayer-js/chains";
-import { DEPLOYED_PATCHSCOPE_ADDRESS, STUDIONET_CHAIN_ID, STUDIONET_RPC } from "./network.ts";
+import { assertConfiguredContractAddress, STUDIONET_CHAIN_ID, STUDIONET_RPC } from "./network.ts";
 
 export type ChainTxStatus =
   | "IDLE"
@@ -82,10 +82,21 @@ export async function executeContractWrite(
   provider: InjectedEthereumProvider,
   accountAddress: string,
   functionName: string,
-  args: (string | number | boolean)[],
+  args: (string | number | boolean | unknown[])[],
   entityId?: string,
-  contractAddress: string = DEPLOYED_PATCHSCOPE_ADDRESS,
+  contractAddress?: string,
 ): Promise<ChainTxRecord> {
+  let targetAddress: `0x${string}`;
+  try {
+    targetAddress = assertConfiguredContractAddress(contractAddress);
+  } catch (configErr) {
+    throw new ContractAdapterError(
+      "CONFIG_ERROR",
+      configErr instanceof Error ? configErr.message : "Contract address is not configured.",
+      configErr,
+    );
+  }
+
   await assertStudionetChain(provider);
 
   const client = createGenLayerWriteClient(provider);
@@ -93,7 +104,7 @@ export async function executeContractWrite(
 
   try {
     const rawHash = await client.writeContract({
-      address: contractAddress as `0x${string}`,
+      address: targetAddress,
       functionName,
       args: args as any,
       account: { address: accountAddress as `0x${string}` } as any,
@@ -103,8 +114,16 @@ export async function executeContractWrite(
     txHash = String(rawHash);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (msg.includes("4001") || msg.toLowerCase().includes("user rejected") || msg.toLowerCase().includes("denied")) {
-      throw new ContractAdapterError("USER_REJECTED", "Transaction was rejected in the wallet.", err);
+    if (
+      msg.includes("4001") ||
+      msg.toLowerCase().includes("user rejected") ||
+      msg.toLowerCase().includes("denied")
+    ) {
+      throw new ContractAdapterError(
+        "USER_REJECTED",
+        "Transaction was rejected in the wallet.",
+        err,
+      );
     }
     if (msg.includes("BLOCKED_BY_SAFETY_GUARD")) {
       throw new ContractAdapterError("SAFETY_GUARD_BLOCKED", msg, err);
@@ -113,7 +132,10 @@ export async function executeContractWrite(
   }
 
   if (!/^0x[0-9a-fA-F]{64}$/.test(txHash)) {
-    throw new ContractAdapterError("INVALID_TX_HASH", `Invalid transaction hash returned: ${txHash}`);
+    throw new ContractAdapterError(
+      "INVALID_TX_HASH",
+      `Invalid transaction hash returned: ${txHash}`,
+    );
   }
 
   return {
@@ -132,7 +154,13 @@ export async function pollTransactionStatus(
   maxAttempts: number = 30,
   intervalMs: number = 3000,
   onProgress?: (status: ChainTxStatus, attempts: number) => void,
-): Promise<{ status: ChainTxStatus; confirmedAt?: number; error?: string; consensusResult?: string; validatorVotes?: string[] }> {
+): Promise<{
+  status: ChainTxStatus;
+  confirmedAt?: number;
+  error?: string;
+  consensusResult?: string;
+  validatorVotes?: string[];
+}> {
   const client = createClient({
     chain: studionet,
     endpoint: STUDIONET_RPC,

@@ -1,6 +1,7 @@
 # PatchScope
 
 PatchScope freezes the scope of a software fix between two parties (developer and client). When subsequent requests or defect claims arrive, PatchScope classifies each request into one of three marks:
+
 - **`IN_SCOPE`**: The request matches included work and satisfies acceptance criteria with admissible evidence.
 - **`CHANGE_REQUEST`**: The request cites excluded clauses or asks for work outside the accepted scope card.
 - **`INSUFFICIENT_EVIDENCE`**: The request lacks required evidence (e.g. baseline vs. post-patch reports for protected behaviors), cites mixed clauses, or fails atomicity.
@@ -29,20 +30,23 @@ PatchScope currently implements two complementary layers:
 
 ## Canonical Contract & Studionet Deployment
 
-| Property | Value |
-| :--- | :--- |
-| **Network** | GenLayer Studionet Testnet |
-| **Chain ID** | `61999` (`0xf22f`) |
-| **RPC Endpoint** | `https://studio.genlayer.com/api` |
-| **Active Contract Address** | `0x7aFa58C5CF4E0145Bbb8B9C508036EeBc349C2Df` |
-| **Deployment Transaction** | `0x4708be83a0fd7d6b015b81b2656dc14673b5e87fe6d0c36af9717d47946e2f4f` |
-| **Deployment Status** | `ACCEPTED`, `MAJORITY_AGREE` (Consensus Result: 6, 3 AGREE, 2 IDLE) |
-| **Canonical Contract Source** | `EchoTrace/contracts/patchscope.py` |
-| **Source SHA-256** | `30f59a5ea57a557ccd0dcc5e2e4dde2c3929d4646e9af6ca80cfce4b8505bcaf` |
-| **Source Size** | 42,706 bytes |
-| **Runtime Depends Pin** | `py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6` |
+| Property                        | Value                                                                                    |
+| :------------------------------ | :--------------------------------------------------------------------------------------- |
+| **Network**                     | GenLayer Studionet Testnet                                                               |
+| **Chain ID**                    | `61999` (`0xf22f`)                                                                       |
+| **RPC Endpoint**                | `https://studio.genlayer.com/api`                                                        |
+| **Active Contract Address**     | Explicit configuration required via `VITE_GENLAYER_CONTRACT_ADDRESS` (empty by default). |
+| **Tested Reference Deployment** | `0x7aFa58C5CF4E0145Bbb8B9C508036EeBc349C2Df` (Studionet test deployment)                 |
+| **Deployment Transaction**      | `0x4708be83a0fd7d6b015b81b2656dc14673b5e87fe6d0c36af9717d47946e2f4f`                     |
+| **Deployment Status**           | `ACCEPTED`, `MAJORITY_AGREE` (Consensus Result: 6, 3 AGREE, 2 IDLE)                      |
+| **Canonical Contract Source**   | `EchoTrace/contracts/patchscope.py`                                                      |
+| **Source SHA-256**              | `30f59a5ea57a557ccd0dcc5e2e4dde2c3929d4646e9af6ca80cfce4b8505bcaf`                       |
+| **Source Size**                 | 42,706 bytes                                                                             |
+| **Runtime Depends Pin**         | `py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6`                       |
 
-> **Note on Deployment History**: An earlier deployment transaction (`0x053ba6045893e50c22da36652b9767538ce0aa78d17f3f13c2c0b6504dfde991`) failed during constructor execution due to manual instantiation of `DynArray` and `TreeMap` collections. GenVM zero-initializes collection fields automatically. The active deployment (`0x7aFa58C5CF4E0145Bbb8B9C508036EeBc349C2Df`) resolved this and is verified active.
+> **Note on Deployment History & Explicit Configuration**: An earlier deployment transaction (`0x053ba6045893e50c22da36652b9767538ce0aa78d17f3f13c2c0b6504dfde991`) failed during constructor execution due to manual instantiation of `DynArray` and `TreeMap` collections. GenVM zero-initializes collection fields automatically. The deployment (`0x7aFa58C5CF4E0145Bbb8B9C508036EeBc349C2Df`) resolved this. In v1.0.1, PatchScope removes all implicit baked address fallbacks and requires an explicit `VITE_GENLAYER_CONTRACT_ADDRESS` configuration. When unset, the application operates in safe offline preview mode.
+>
+> **EchoTrace Reference Integration & `get_relationships`**: PatchScope does not call `get_relationships` in production. The canonical contract interface for PatchScope is `EchoTrace/contracts/patchscope.py` (which exposes 7 view methods and 15 write methods). The reference contract `EchoTrace/contracts/echotrace.py` from the inherited dossier exposes `get_relationships`, returning the canonical shape `{"found": boolean, "relationships": [...]}`. This repository includes contract compatibility tests verifying this canonical shape and rejecting legacy bare arrays (`[]`).
 
 ### Verified Public View Methods
 
@@ -69,11 +73,13 @@ The deployed contract exposes seven public view methods, all independently verif
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js 20+ (Node.js 22+ recommended)
 - npm 10+
 - Python 3.10+ (for running contract unit tests)
 
 ### Installation
+
 ```bash
 git clone https://github.com/0xbardia/PatchScope.git
 cd PatchScope
@@ -82,12 +88,14 @@ cp .env.example .env
 ```
 
 ### Development Server
+
 ```bash
 npm run dev
 # Starts local development server at http://127.0.0.1:8080
 ```
 
 ### Production Build
+
 ```bash
 npm run build
 npm run preview
